@@ -1,7 +1,32 @@
 ﻿@page "/Map"
+@using GoogleMapsComponents
+@using Microsoft.AspNetCore.Components.Web
+@using GoogleMapsComponents.Maps
+@inject IJSRuntime JSRuntime
 
-<h3>Map Page</h3>
+<h3>Google Map Example</h3>
 
+<div style="height:500px; width:100%;">
+    <GoogleMap @ref="map1" Options="mapOptions" />
+    
+</div>
+    
 @code {
+    private GoogleMap? map1;
+    private InfoWindow? infoWindow;
+    private MapOptions mapOptions = new MapOptions()
+        {
+            Zoom = 15,
+            Center = new LatLngLiteral()
+            {
+                Lat = 53.7679, // Latitude
+                Lng = -0.3681 // Longitude
+            },
+            MapTypeId = MapTypeId.Roadmap
+        };
 
+  
 }
+
+
+

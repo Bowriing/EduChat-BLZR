@@ -7,8 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="BlazorGoogleMaps" Version="3.0.2" />
     <PackageReference Include="Blazorise" Version="1.2.2" />
     <PackageReference Include="BlazorThemeSwitcher" Version="2.0.1" />
+    <PackageReference Include="MySql.Data" Version="8.0.32.1" />
+    <PackageReference Include="MySqlConnector" Version="2.2.5" />
   </ItemGroup>
 
 </Project>
