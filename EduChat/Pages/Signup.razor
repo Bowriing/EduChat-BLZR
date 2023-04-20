@@ -1,0 +1,55 @@
+﻿@page "/signup"
+@using MySql.Data.MySqlClient;
+@inject MySqlConnection Connection
+@inject NavigationManager NavigationManager
+
+<h1>Sign up</h1>
+
+<div>
+    <label for="name">Name:</label>
+    <input type="text" id="name" @bind-value="Name" />
+</div>
+
+<div>
+    <label for="email">Email:</label>
+    <input type="email" id="email" @bind-value="Email" />
+</div>
+
+<div>
+    <label for="password">Password:</label>
+    <input type="password" id="password" @bind-value="Password" />
+</div>
+
+<button @onclick="SignupUser">Sign up</button>
+
+@code {
+    private string Name { get; set; }
+    private string Email { get; set; }
+    private string Password { get; set; }
+
+    private async Task SignupUser()
+    {
+        try
+        {
+            await Connection.OpenAsync();
+
+            MySqlCommand cmd = new MySqlCommand("INSERT INTO users (name, email, password) VALUES (@name, @email, @password)");
+            cmd.Parameters.AddWithValue("@name", Name);
+            cmd.Parameters.AddWithValue("@email", Email);
+            cmd.Parameters.AddWithValue("@password", Password);
+            cmd.Connection = Connection;
+
+            await cmd.ExecuteNonQueryAsync();
+            NavigationManager.NavigateTo("/login");
+           
+        }
+        catch (Exception ex)
+        {
+            // Handle the exception
+        }
+        finally
+        {
+            await Connection.CloseAsync();
+        }
+    }
+}

@@ -1,0 +1,66 @@
+﻿@page "/login"
+@using EduChat.Services;
+@using MySql.Data.MySqlClient;
+@inject UserService UserService
+@inject MySqlConnection Connection
+@inject NavigationManager NavigationManager
+
+<h1>Login</h1>
+
+<div>
+    <label for="email">Email:</label>
+    <input type="email" id="email" @bind-value="Email" />
+</div>
+
+<div>
+    <label for="password">Password:</label>
+    <input type="password" id="password" @bind-value="Password" />
+</div>
+
+<button @onclick="LoginUser">Login</button>
+
+@code {
+    private string Email { get; set; }
+    private string Password { get; set; }
+    private string UserName { get; set; }
+    private async Task LoginUser()
+    {
+        try
+        {
+            await Connection.OpenAsync();
+
+            MySqlCommand cmd = new MySqlCommand("SELECT COUNT(*) FROM users WHERE email = @email AND password = @password; SELECT name FROM users WHERE email = @email");
+            cmd.Parameters.AddWithValue("@email", Email);
+            cmd.Parameters.AddWithValue("@password", Password);
+            cmd.Connection = Connection;
+            MySqlDataReader reader = cmd.ExecuteReader() as MySqlDataReader;
+
+            int count = Convert.ToInt32(await cmd.ExecuteScalarAsync());
+           
+            if (count == 1)
+            {
+                if (await reader.NextResultAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        UserName = reader.GetString(0);
+                        UserService.UserName = UserName;
+                    }
+                }
+                NavigationManager.NavigateTo("/home");
+            }
+            else
+            {
+                // Display error message
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle the exception
+        }
+        finally
+        {
+            await Connection.CloseAsync();
+        }
+    }
+}
