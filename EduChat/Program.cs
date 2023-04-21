@@ -4,7 +4,8 @@ using Microsoft.AspNetCore.Components.Web;
 using MySql.Data.MySqlClient;
 
 var builder = WebApplication.CreateBuilder(args);
-string connectionString = "Server=localhost;Database=educhat;Uid=root;Pwd=Jadzia123!;Port=3306;" ;
+string connectionString = "Server=localhost;Database=EduChat;User=root;Password=M3g5t1l4c05t3;Port=3306;" ;
+//"Server=localhost;Database=educhat;Uid=root;Pwd=Jadzia123!;Port=3306;";
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
