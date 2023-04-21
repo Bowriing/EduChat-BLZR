@@ -1,0 +1,85 @@
+﻿@page "/studentsupport"
+@using MySql.Data.MySqlClient
+@inject IConfiguration Configuration
+
+<h3>Student Support</h3>
+
+<h4>Translation Request</h4>
+<label>Document Language:</label>
+<input @bind="DocumentLanguage" type="text" />
+<br />
+<label>Requested Language:</label>
+<input @bind="RequestedLanguage" type="text" />
+<br />
+<label>Document File:</label>
+<input @onchange="OnFileUpload" type="file" accept=".doc,.docx" />
+<br />
+<button @onclick="SubmitTranslationRequest">Add Request</button>
+
+<h4>Translation Services</h4>
+<label>Languages:</label>
+<input @bind="Languages" type="text" />
+<br />
+<label>Availability:</label>
+<input @bind="Availability" type="text" />
+<br />
+<label>Rates:</label>
+<input @bind="Rates" type="text" />
+<br />
+<button @onclick="SubmitTranslationService">Add Service</button>
+
+@code {
+    private string DocumentLanguage { get; set; }
+    private string RequestedLanguage { get; set; }
+    private byte[] DocumentFileContent { get; set; }
+
+    private string Languages { get; set; }
+    private string Availability { get; set; }
+    private string Rates { get; set; }
+
+    private string ConnectionString => Configuration.GetConnectionString("MySqlConnection");
+
+    private async Task OnFileUpload(ChangeEventArgs e)
+    {
+        var file = e.Value as IBrowserFile;
+        if (file != null)
+        {
+            using var memoryStream = new MemoryStream();
+            await file.OpenReadStream().CopyToAsync(memoryStream);
+            DocumentFileContent = memoryStream.ToArray();
+        }
+    }
+
+    private async Task SubmitTranslationRequest()
+    {
+        using var connection = new MySqlConnection(ConnectionString);
+        await connection.OpenAsync();
+
+        var query = "INSERT INTO Translation_Requests (document_language_id, requested_language_id, user_id, document_file) VALUES (@documentLanguage, @requestedLanguage, @userId, @documentFile)";
+
+        using var command = new MySqlCommand(query, connection);
+        command.Parameters.AddWithValue("@documentLanguage", DocumentLanguage);
+        command.Parameters.AddWithValue("@requestedLanguage", RequestedLanguage);
+        command.Parameters.AddWithValue("@userId", 1); // Replace this with the actual user ID
+        command.Parameters.AddWithValue("@documentFile", DocumentFileContent);
+
+        await command.ExecuteNonQueryAsync();
+    }
+
+    private async Task SubmitTranslationService()
+    {
+        using var connection = new MySqlConnection(ConnectionString);
+        await connection.OpenAsync();
+
+        var query = "INSERT INTO Translation_Services (language_id, availability, rates, user_id) VALUES (@language, @availability, @rates, @userId)";
+
+        using var command = new MySqlCommand(query, connection);
+        command.Parameters.AddWithValue("@language", Languages);
+        command.Parameters.AddWithValue("@availability", Availability);
+        command.Parameters.AddWithValue("@rates", Rates);
+        command.Parameters.AddWithValue("@userId", 1); // Replace this with the actual user ID
+
+        await command.ExecuteNonQueryAsync();
+    }
+}
+
