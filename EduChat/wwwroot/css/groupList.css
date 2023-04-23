@@ -1,0 +1,44 @@
+﻿
+    .study-groups-container{
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.study-groups-container h3 {
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.study-groups-container .table {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+    .study-groups-container .table thead th {
+        background-color: #f8f9fa;
+        padding: 1rem;
+    }
+
+    .study-groups-container .table tbody tr {
+        border-bottom: 1px solid #dee2e6;
+    }
+
+        .study-groups-container .table tbody tr:last-child {
+            border-bottom: none;
+        }
+
+    .study-groups-container .table tbody td {
+        padding: 1rem;
+    }
+
+    .study-groups-container .table .btn-sm {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+    }
+
+.goal-cell {
+    max-width: 150px;
+    word-wrap: break-word;
+}
