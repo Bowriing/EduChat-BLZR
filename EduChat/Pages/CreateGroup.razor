@@ -1,0 +1,105 @@
+﻿@page "/creategroup"
+@using MySql.Data.MySqlClient;
+@inject MySqlConnection Connection
+
+
+@inject NavigationManager NavigationManager
+<style>
+    .create-study-group-form {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 2rem;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+        .create-study-group-form h3 {
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+</style>
+
+<div class="create-study-group-form">
+    <h3>Create Study Group</h3>
+
+    <form @onsubmit="CreateGroupTask">
+        <div class="form-group">
+            <label for="groupName">Group Name:</label>
+            <input type="text" class="form-control" @bind="Name" />
+        </div>
+        <div class="form-group">
+            <label for="languageName">Language Name:</label>
+            <input type="text" class="form-control" @bind="LanguageName" />
+        </div>
+
+        <div class="form-group">
+            <label for="goal">Goal:</label>
+            <input type="text" class="form-control" @bind="Goal" />
+        </div>
+        <div class="text-center">
+            <button type="submit" class="btn btn-primary mt-4">Create Group</button>
+        </div>
+    </form>
+</div>
+
+<GroupList @ref="groupListComponent" />
+@code {
+    private string LanguageName { get; set; }
+    private string Location { get; set; }
+    private DateTime MeetingTime { get; set; }
+    private string Goal { get; set; }
+    private string Name { get; set; }
+
+    private async Task CreateGroupTask()
+    {
+        try
+        {
+            await Connection.OpenAsync();
+
+
+            // Check if the language exists in the Languages table
+            MySqlCommand checkLanguageCmd = new MySqlCommand("SELECT id FROM languages WHERE name = @languageName");
+            checkLanguageCmd.Parameters.AddWithValue("@languageName", LanguageName);
+            checkLanguageCmd.Connection = Connection;
+
+            object languageIdObj = await checkLanguageCmd.ExecuteScalarAsync();
+            int languageId;
+
+            if (languageIdObj == null)
+            {
+                // Insert the language into the Languages table if it doesn't exist
+                MySqlCommand insertLanguageCmd = new MySqlCommand("INSERT INTO languages (name) VALUES (@languageName)");
+                insertLanguageCmd.Parameters.AddWithValue("@languageName", LanguageName);
+                insertLanguageCmd.Connection = Connection;
+
+                await insertLanguageCmd.ExecuteNonQueryAsync();
+
+                // Get the inserted language's ID
+                languageId = (int)insertLanguageCmd.LastInsertedId;
+            }
+            else
+            {
+                languageId = Convert.ToInt32(languageIdObj);
+            }
+
+            // Insert the study group using the languageId
+            MySqlCommand cmd = new MySqlCommand("INSERT INTO study_groups (language_id, goal, name) VALUES (@languageId, @goal, @groupName)");
+            cmd.Parameters.AddWithValue("@languageId", languageId);
+            
+            cmd.Parameters.AddWithValue("@goal", Goal);
+            cmd.Parameters.AddWithValue("@groupName", Name);
+            cmd.Connection = Connection;
+
+            await cmd.ExecuteNonQueryAsync();
+
+        }
+        catch (Exception ex)
+        {
+            // Handle the exception
+        }
+        await Connection.CloseAsync();
+        NavigationManager.NavigateTo("/creategroup", forceLoad: true);
+    }
+    private GroupList groupListComponent;
+}
