@@ -1,4 +1,8 @@
 ﻿@page "/home"
 @inherits HomeBase
+@using EduChat.Services
+@inject UserService UserService
 
-<h3>Home Page</h3>
+<h1>Welcome, @UserService.LoggedInUser.Name!</h1>
+
+<p>Here is your homepage...</p>

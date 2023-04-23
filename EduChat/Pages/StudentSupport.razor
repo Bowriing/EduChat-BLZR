@@ -3,55 +3,167 @@
 @inject MySqlConnection Connection
 @inject IConfiguration Configuration
 @using EduChat.Models
+@using Tewr.Blazor.FileReader
+@inject IFileReaderService FileReaderService
+@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
+@using Blazorise
+@using Services
+@inject IToastService ToastService
 
-<link href="StudentSupport.css" rel="stylesheet" />
-
-<h3>Student Support</h3>
 
 
-<label>Document Language:</label>
-<select @bind="DocumentLanguage">
-    <option value="">Select a language</option>
-    @foreach (var language in Languages)
-    {
-        <option value="@language.Key">@language.Value</option>
-    }
-</select>
-<br />
-<label>Requested Language:</label>
-<select @bind="RequestedLanguage">
-    <option value="">Select a language</option>
-    @foreach (var language in Languages)
-    {
-        <option value="@language.Key">@language.Value</option>
-    }
-</select>
 
-<h4>Translation Request</h4>
-<label>Document Language:</label>
-<input @bind-value="DocumentLanguage" type="text" />
-<br />
-<label>Requested Language:</label>
-<input @bind-value="RequestedLanguage" type="text" />
-<br />
-<label>Document File:</label>
-<input @onchange="OnFileUpload" type="file" accept=".doc,.docx" />
-<br />
-<button @onclick="SubmitTranslationRequest">Add Request</button>
+<HeadContent>
+    <link href="/css/StudentSupport.css" rel="stylesheet" />
+</HeadContent>
 
-<h4>Translation Services</h4>
-<label>Languages:</label>
-<input @bind-value="Languages" type="text" />
-<br />
-<label>Availability:</label>
-<input @bind-value="Availability" type="text" />
-<br />
-<label>Rates:</label>
-<input @bind-value="Rates" type="text" />
-<br />
-<button @onclick="SubmitTranslationService">Add Service</button>
+
+<h3>Student Support </h3>
+
+
+<div class="tab-container">
+    <div class="tab @(ActiveTab == 1 ? "active" : "")" @onclick="() => ActiveTab = 1">Translation Requests</div>
+    <div class="tab @(ActiveTab == 2 ? "active" : "")" @onclick="() => ActiveTab = 2">Uploaded Translation Requests</div>
+    <div class="tab @(ActiveTab == 3 ? "active" : "")" @onclick="() => ActiveTab = 3">Translators</div>
+</div>
+
+<div class="tab-content-container">
+
+
+    <div class="tab-content @(ActiveTab == 1 ? "active" : "")">
+        <label>Document Language:</label>
+        <select @bind="DocumentLanguage">
+            <option value="">Select a language</option>
+            @foreach (var lang in Language)
+            {
+                <option value="@lang.Key">@lang.Value</option>
+            }
+        </select>
+        <br />
+        <label>Requested Language:</label>
+        <select @bind="RequestedLanguage">
+            <option value="">Select a language</option>
+            @foreach (var lang in Language)
+            {
+                <option value="@lang.Key">@lang.Value</option>
+            }
+        </select>
+        <br />
+        <label>Document File:</label>
+        <InputFile OnChange="OnFileUpload" accept=".doc,.docx" />
+        <br />
+
+        <button @onclick="SubmitTranslationRequest">Add Request</button>
+    </div>
+
+
+
+    <div class="tab-content @(ActiveTab == 2 ? "active" : "")">
+        <h4>Uploaded Documents</h4>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Document Language</th>
+                    <th>Requested Language</th>
+                    <th>User Name</th>
+                    <th>User Email</th>
+                    <th>Download</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var request in TranslationRequests)
+                {
+                    <tr>
+                        <td>@request.Id</td>
+                        <td>@Language[request.DocumentLanguageId]</td>
+                        <td>@Language[request.RequestedLanguageId]</td>
+                        <td>@request.UserName</td>
+                        <td>@request.UserEmail</td>
+                        <td><button @onclick="() => DownloadFile(request.Id)">Download</button></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+
+
+
+    <div class="tab-content @(ActiveTab == 3 ? "active" : "")">
+        <div class="services-container">
+            <div class="existing-translation-services">
+                <h4>Existing Translation Services</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Translate From Language</th>
+                            <th>Translate To Language</th>
+                            <th>Availability</th>
+                            <th>Rates</th>
+                            <th>User Name</th>
+                            <th>User Email</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var service in ExistingTranslationServices)
+                        {
+                            <tr>
+                                <td>@service.Id</td>
+                                <td>@Language[service.TranslateFromLanguageId]</td>
+                                <td>@Language[service.TranslateToLanguageId]</td>
+                                <td>@service.Availability</td>
+                                <td>@service.Rates</td>
+                                <td>@service.UserName</td>
+                                <td>@service.UserEmail</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="add-translation-service">
+                <h4>Add Translation Service</h4>
+                <label>Languages:</label>
+                <select @bind="SelectedTranslateFromLanguageId">
+                    <option value="">Select a language</option>
+                    @foreach (var lang in Language)
+                    {
+                        <option value="@lang.Key">@lang.Value</option>
+                    }
+                    }
+                </select>
+                <br />
+                <select @bind="SelectedTranslateToLanguageId">
+                    <option value="">Select a language</option>
+                    @foreach (var lang in Language)
+                    {
+                        <option value="@lang.Key">@lang.Value</option>
+                    }
+                </select>
+                <br />
+                <label>Availability:</label>
+                <input @bind="Availability" type="text" />
+                <br />
+                <label>Rates:</label>
+                <input @bind="Rates" type="text" />
+                <br />
+                <button @onclick="SubmitTranslationService">Add Service</button>
+            </div>
+        </div>
+    </div>
+
+
+
+
+</div>
+
+
 
 @code {
+    [Parameter] public EventCallback OnServiceAdded { get; set; }
+    private int ActiveTab { get; set; } = 1;
     private string DocumentLanguage { get; set; }
     private string RequestedLanguage { get; set; }
     private byte[] DocumentFileContent { get; set; }
@@ -60,8 +172,150 @@
     private string Availability { get; set; }
     private string Rates { get; set; }
 
-    //private string ConnectionString => Configuration.GetConnectionString("MySqlConnection");
+    private int SelectedTranslateFromLanguageId { get; set; }
+    private int SelectedTranslateToLanguageId { get; set; }
 
+
+
+
+    private ElementReference inputFileElement;
+
+    private List<TranslationRequest> TranslationRequests { get; set; }
+
+    public class TranslationRequest
+    {
+        public int Id { get; set; }
+        public int DocumentLanguageId { get; set; }
+        public int RequestedLanguageId { get; set; }
+        public string UserName { get; set; }
+        public string UserEmail { get; set; }
+    }
+
+    public class TranslationService
+    {
+        public int Id { get; set; }
+        public int TranslateFromLanguageId { get; set; }
+        public int TranslateToLanguageId { get; set; }
+        public string Availability { get; set; }
+        public string Rates { get; set; }
+        public string UserName { get; set; }
+        public string UserEmail { get; set; }
+    }
+
+
+    private async Task<List<TranslationService>> GetAllTranslationServices()
+    {
+        var services = new List<TranslationService>();
+
+        try
+        {
+            await Connection.OpenAsync();
+
+            using var command = new MySqlCommand("SELECT ts.id, ts.translate_from_language_id, ts.translate_to_language_id, ts.availability, ts.rates, u.name, u.email FROM Translation_Services ts JOIN Users u ON ts.user_id = u.id");
+            command.Connection = Connection;
+
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                services.Add(new TranslationService
+                    {
+                        Id = reader.GetInt32(0),
+                        TranslateFromLanguageId = reader.GetInt32(1),
+                        TranslateToLanguageId = reader.GetInt32(2),
+                        Availability = reader.GetString(3),
+                        Rates = reader.GetString(4),
+                        UserName = reader.GetString(5),
+                        UserEmail = reader.GetString(6),
+                    });
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error: " + ex.Message);
+        }
+        finally
+        {
+            await Connection.CloseAsync();
+        }
+
+        return services;
+    }
+    private List<TranslationService> ExistingTranslationServices { get; set; }
+
+    private async Task<List<TranslationRequest>> GetAllTranslationRequests()
+    {
+        var requests = new List<TranslationRequest>();
+
+        try
+        {
+            await Connection.OpenAsync();
+
+            using var command = new MySqlCommand("SELECT tr.id, tr.document_language_id, tr.requested_language_id, u.name, u.email FROM Translation_Requests tr JOIN Users u ON tr.user_id = u.id");
+            command.Connection = Connection;
+
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                requests.Add(new TranslationRequest
+                    {
+                        Id = reader.GetInt32(0),
+                        DocumentLanguageId = reader.GetInt32(1),
+                        RequestedLanguageId = reader.GetInt32(2),
+                        UserName = reader.GetString(3),
+                        UserEmail = reader.GetString(4),
+                    });
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error: " + ex.Message);
+        }
+        finally
+        {
+            await Connection.CloseAsync();
+        }
+
+        return requests;
+    }
+
+
+    private async Task DownloadFile(int requestId)
+    {
+        byte[] fileContent;
+
+        try
+        {
+            await Connection.OpenAsync();
+
+            using var command = new MySqlCommand("SELECT document_file FROM Translation_Requests WHERE id = @id");
+            command.Parameters.AddWithValue("@id", requestId);
+            command.Connection = Connection;
+
+            fileContent = (byte[])await command.ExecuteScalarAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error: " + ex.Message);
+            return;
+        }
+        finally
+        {
+            await Connection.CloseAsync();
+        }
+
+        if (fileContent != null)
+        {
+            var fileExtension = ".docx";
+            var fileName = $"document_{requestId}{fileExtension}";
+            var contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+            await JSRuntime.InvokeVoidAsync("saveAsFile", fileName, Convert.ToBase64String(fileContent), contentType);
+        }
+        else
+        {
+            Console.WriteLine("Error: File content is null.");
+        }
+    }
 
     private Dictionary<int, string> Language { get; set; } = new Dictionary<int, string>();
 
@@ -78,9 +332,9 @@
 
             while (await reader.ReadAsync())
             {
-                int id = reader.GetInt32("id");
-                string name = reader.GetString("name");
-                Languages.Add(id, name);
+                int id = reader.GetInt32(0);
+                string name = reader.GetString(1);
+                Language.Add(id, name);
             }
         }
         catch (Exception ex)
@@ -93,43 +347,42 @@
         }
     }
 
-
     protected override async Task OnInitializedAsync()
     {
         await LoadLanguages();
-    } 
+        TranslationRequests = await GetAllTranslationRequests();
+        ExistingTranslationServices = await GetAllTranslationServices();
+    }
 
-
-
-    private async Task OnFileUpload(ChangeEventArgs e)
+    private async Task OnFileUpload(InputFileChangeEventArgs e)
     {
-        var file = e.Value as IBrowserFile;
+        var file = e.File;
         if (file != null)
         {
             using var memoryStream = new MemoryStream();
             await file.OpenReadStream().CopyToAsync(memoryStream);
             DocumentFileContent = memoryStream.ToArray();
+            Console.WriteLine($"File uploaded: {file.Name}, Size: {memoryStream.Length} bytes");
         }
     }
 
     private async Task SubmitTranslationRequest()
     {
-
         try
         {
             await Connection.OpenAsync();
             MySqlCommand command = new MySqlCommand("INSERT INTO Translation_Requests (document_language_id, requested_language_id, user_id, document_file) VALUES (@documentLanguage, @requestedLanguage, @userId, @documentFile)");
 
-
             command.Parameters.AddWithValue("@documentLanguage", DocumentLanguage);
             command.Parameters.AddWithValue("@requestedLanguage", RequestedLanguage);
-            command.Parameters.AddWithValue("@userId", 1); // Replace this with the actual user ID
+            command.Parameters.AddWithValue("@userId", UserService.LoggedInUser.Id);
             command.Parameters.AddWithValue("@documentFile", DocumentFileContent);
             command.Connection = Connection;
 
             await command.ExecuteNonQueryAsync();
+            ToastService.ShowSuccess("Request has been added successfully.");
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             // Handle the exception
         }
@@ -138,6 +391,7 @@
             await Connection.CloseAsync();
         }
 
+        await RefreshData();
     }
 
     private async Task SubmitTranslationService()
@@ -145,17 +399,16 @@
         try
         {
             await Connection.OpenAsync();
-
-            using var command = new MySqlCommand("INSERT INTO Translation_Services (language_id, availability, rates, user_id) VALUES (@language, @availability, @rates, @userId)");
-            command.Parameters.AddWithValue("@language", Languages);
+            MySqlCommand command = new MySqlCommand("INSERT INTO Translation_Services (translate_from_language_id, translate_to_language_id, availability, rates, user_id) VALUES (@translate_from_language_id, @translate_to_language_id, @availability, @rates, @userId)");
+            command.Parameters.AddWithValue("@translate_from_language_id", SelectedTranslateFromLanguageId);
+            command.Parameters.AddWithValue("@translate_to_language_id", SelectedTranslateToLanguageId);
             command.Parameters.AddWithValue("@availability", Availability);
             command.Parameters.AddWithValue("@rates", Rates);
-            command.Parameters.AddWithValue("@userId", 1); // Replace this with the actual user ID
+            command.Parameters.AddWithValue("@userId", UserService.LoggedInUser.Id);
             command.Connection = Connection;
-
             await command.ExecuteNonQueryAsync();
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             // Handle the exception
         }
@@ -164,6 +417,15 @@
             await Connection.CloseAsync();
         }
 
+        await RefreshData();
+
     }
+
+    private async Task RefreshData()
+    {
+        TranslationRequests = await GetAllTranslationRequests();
+        ExistingTranslationServices = await GetAllTranslationServices();
+    }
+
 }
 

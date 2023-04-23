@@ -1,7 +1,58 @@
-﻿@page "/Settings"
-@inherits SettingsBase
+﻿@page "/settings"
+@using EduChat.Services;
+@inject IJSRuntime JSRuntime
 
-<h1>Settings Page</h1>
-<button class="btn-primary" @onclick="DarkModeButtonClick" type="button">
-    Dark Mode
-</button>
+
+<h3>Settings</h3>
+
+<div class="settings-container">
+    <div class="setting-section">
+        <h4>Appearance</h4>
+        <div>
+            <label for="themeMode">Theme Mode: </label>
+            <select id="themeMode" @bind="ThemeMode" @bind:event="oninput">
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="setting-section">
+        <h4>User Details</h4>
+        <div>
+            <p>User: @(UserService.LoggedInUser?.Name ?? "Not logged in")</p>W
+
+@*            <p>Name: @UserService.LoggedInUser.Name</p>
+            <p>Email: @UserService.LoggedInUser.Email</p>*@
+            <!-- Add more user details here -->
+        </div>
+    </div>
+</div>
+
+@code {
+
+    private string ThemeMode { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        ThemeMode = await GetThemeFromLocalStorage();
+    }
+
+    private async Task ChangeTheme(ChangeEventArgs e)
+    {
+        ThemeMode = e.Value.ToString();
+        await SaveThemeToLocalStorage(ThemeMode);
+        // Other code related to changing the theme
+    }
+
+    private async Task SaveThemeToLocalStorage(string themeMode)
+    {
+        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "ThemeMode", themeMode);
+    }
+
+    private async Task<string> GetThemeFromLocalStorage()
+    {
+        return await JSRuntime.InvokeAsync<string>("localStorage.getItem", "ThemeMode");
+    }
+}
+

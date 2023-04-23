@@ -17,6 +17,15 @@
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD7lpVLYqJklPU-g0g3uIUAPgda_2djq6s" async defer></script>
 
     <script src="_content/BlazorGoogleMaps/js/objectManager.js"></script>
+
+    <link href="_content/Blazorise/blazorise.min.css" rel="stylesheet" />
+    <link href="_content/Blazorise.Bootstrap/blazorise.bootstrap.min.css" rel="stylesheet" />
+    <link href="_content/Blazorise.Icons.FontAwesome/blazorise.fontawesome.min.css" rel="stylesheet" />
+
+    <!-- Add the following line just before the closing </body> tag -->
+    <script src="_content/Blazorise/blazorise.min.js"></script>
+
+
 </head>
 <body>
     <component type="typeof(App)" render-mode="ServerPrerendered" />
@@ -33,5 +42,19 @@
     </div>
 
     <script src="_framework/blazor.server.js"></script>
+    <script src="fileSaver.js"></script>
+    <script>
+        function changeTheme(theme) {
+            if (theme === "dark-theme") {
+                document.body.classList.add("dark-theme");
+            } else {
+                document.body.classList.remove("dark-theme");
+            }
+        }
+    </script>
+
+
+
+
 </body>
 </html>

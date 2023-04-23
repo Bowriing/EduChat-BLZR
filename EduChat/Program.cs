@@ -1,7 +1,14 @@
 using EduChat.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using MudBlazor.Services;
 using MySql.Data.MySqlClient;
+using Tewr.Blazor.FileReader;
+using Blazorise;
+using Blazorise.Bootstrap;
+using Blazorise.Icons.FontAwesome;
+using Blazored.Toast;
+
 
 var builder = WebApplication.CreateBuilder(args);
 string connectionString = "Server=localhost;Database=EduChat;User=root;Password=M3g5t1l4c05t3;Port=3306;" ;
@@ -11,7 +18,19 @@ builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddScoped<MySqlConnection>(_ => new MySqlConnection(connectionString));
 builder.Services.AddSingleton<UserService>();
+builder.Services.AddScoped<UserService>();
+builder.Services.AddBlazoredToast();
+
+builder.Services.AddFileReaderService(options => options.InitializeOnFirstCall = true);
+
+
+
+builder.Services.AddBlazorise(options => { })
+    .AddBootstrapProviders()
+    .AddFontAwesomeIcons();
+
 var app = builder.Build();
+
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
