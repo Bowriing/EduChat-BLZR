@@ -11,26 +11,19 @@
 @using Services
 @inject IToastService ToastService
 
-
-
-
 <HeadContent>
     <link href="/css/StudentSupport.css" rel="stylesheet" />
 </HeadContent>
 
-
 <h3>Student Support </h3>
-
-
 <div class="tab-container">
-    <div class="tab @(ActiveTab == 1 ? "active" : "")" @onclick="() => ActiveTab = 1">Translation Requests</div>
+    <div class="tab @(ActiveTab == 1 ? "active" : "")" @onclick="() => ActiveTab = 1">Add Translation Requests</div>
     <div class="tab @(ActiveTab == 2 ? "active" : "")" @onclick="() => ActiveTab = 2">Uploaded Translation Requests</div>
-    <div class="tab @(ActiveTab == 3 ? "active" : "")" @onclick="() => ActiveTab = 3">Translators</div>
+    <div class="tab @(ActiveTab == 3 ? "active" : "")" @onclick="() => ActiveTab = 3">Add Translanslation Service</div>
+    <div class="tab @(ActiveTab == 4 ? "active" : "")" @onclick="() => ActiveTab = 4">Browse Translators services</div>
 </div>
 
 <div class="tab-content-container">
-
-
     <div class="tab-content @(ActiveTab == 1 ? "active" : "")">
         <label>Document Language:</label>
         <select @bind="DocumentLanguage">
@@ -56,9 +49,6 @@
 
         <button @onclick="SubmitTranslationRequest">Add Request</button>
     </div>
-
-
-
     <div class="tab-content @(ActiveTab == 2 ? "active" : "")">
         <h4>Uploaded Documents</h4>
         <table>
@@ -87,42 +77,8 @@
             </tbody>
         </table>
     </div>
-
-
-
-
     <div class="tab-content @(ActiveTab == 3 ? "active" : "")">
         <div class="services-container">
-            <div class="existing-translation-services">
-                <h4>Existing Translation Services</h4>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Translate From Language</th>
-                            <th>Translate To Language</th>
-                            <th>Availability</th>
-                            <th>Rates</th>
-                            <th>User Name</th>
-                            <th>User Email</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var service in ExistingTranslationServices)
-                        {
-                            <tr>
-                                <td>@service.Id</td>
-                                <td>@Language[service.TranslateFromLanguageId]</td>
-                                <td>@Language[service.TranslateToLanguageId]</td>
-                                <td>@service.Availability</td>
-                                <td>@service.Rates</td>
-                                <td>@service.UserName</td>
-                                <td>@service.UserEmail</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
             <div class="add-translation-service">
                 <h4>Add Translation Service</h4>
                 <label>Languages:</label>
@@ -143,8 +99,13 @@
                     }
                 </select>
                 <br />
-                <label>Availability:</label>
-                <input @bind="Availability" type="text" />
+                <label for="availabilityFrom">Availability From:</label>
+                <InputDate id="availabilityFrom" @bind-Value="@AvailabilityFrom" />
+
+                <label for="availabilityTo">Availability To:</label>
+                <InputDate id="availabilityTo" @bind-Value="@AvailabilityTo" />
+
+
                 <br />
                 <label>Rates:</label>
                 <input @bind="Rates" type="text" />
@@ -153,15 +114,48 @@
             </div>
         </div>
     </div>
+    <div class="tab-content @(ActiveTab == 4 ? "active" : "")">
+        <div class="services-container2">
+            <div class="existing-translation-services">
+                <h4>Existing Translation Services</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Translate From Language</th>
+                            <th>Translate To Language</th>
+                            <th>Availability From</th>
+                            <th>Availability To</th>
+                            <th>Rates</th>
+                            <th>User Name</th>
+                            <th>Contact</th>
 
-
-
-
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var service in ExistingTranslationServices)
+                        {
+                            <tr>
+                                <td>@service.Id</td>
+                                <td>@Language[service.TranslateFromLanguageId]</td>
+                                <td>@Language[service.TranslateToLanguageId]</td>
+                                <td>@(service.AvailabilityFrom.ToString("yyyy-MM-dd"))</td>
+                                <td>@(service.AvailabilityTo.ToString("yyyy-MM-dd"))</td>
+                                <td>@service.Rates</td>
+                                <td>@service.UserName</td>
+                                <button style="font-size: 12px; padding: 4px 8px;" @onclick="() => OpenOutlook(service.UserEmail)">Email</button>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 
-
-
 @code {
+
+
     [Parameter] public EventCallback OnServiceAdded { get; set; }
     private int ActiveTab { get; set; } = 1;
     private string DocumentLanguage { get; set; }
@@ -174,9 +168,6 @@
 
     private int SelectedTranslateFromLanguageId { get; set; }
     private int SelectedTranslateToLanguageId { get; set; }
-
-
-
 
     private ElementReference inputFileElement;
 
@@ -200,7 +191,12 @@
         public string Rates { get; set; }
         public string UserName { get; set; }
         public string UserEmail { get; set; }
+        public DateTime AvailabilityFrom { get; set; }
+        public DateTime AvailabilityTo { get; set; }
     }
+
+    private DateTime AvailabilityFrom { get; set; }
+    private DateTime AvailabilityTo { get; set; }
 
 
     private async Task<List<TranslationService>> GetAllTranslationServices()
@@ -211,7 +207,7 @@
         {
             await Connection.OpenAsync();
 
-            using var command = new MySqlCommand("SELECT ts.id, ts.translate_from_language_id, ts.translate_to_language_id, ts.availability, ts.rates, u.name, u.email FROM Translation_Services ts JOIN Users u ON ts.user_id = u.id");
+            using var command = new MySqlCommand("SELECT ts.id, ts.translate_from_language_id, ts.translate_to_language_id, ts.availability_from, ts.availability_to, ts.rates, u.name, u.email FROM Translation_Services ts JOIN Users u ON ts.user_id = u.id");
             command.Connection = Connection;
 
             using var reader = await command.ExecuteReaderAsync();
@@ -222,10 +218,11 @@
                         Id = reader.GetInt32(0),
                         TranslateFromLanguageId = reader.GetInt32(1),
                         TranslateToLanguageId = reader.GetInt32(2),
-                        Availability = reader.GetString(3),
-                        Rates = reader.GetString(4),
-                        UserName = reader.GetString(5),
-                        UserEmail = reader.GetString(6),
+                        AvailabilityFrom = reader.GetDateTime(3).Date,
+                        AvailabilityTo = reader.GetDateTime(4).Date,
+                        Rates = reader.GetString(5),
+                        UserName = reader.GetString(6),
+                        UserEmail = reader.GetString(7),
                     });
             }
         }
@@ -396,13 +393,17 @@
 
     private async Task SubmitTranslationService()
     {
+
+
         try
         {
             await Connection.OpenAsync();
-            MySqlCommand command = new MySqlCommand("INSERT INTO Translation_Services (translate_from_language_id, translate_to_language_id, availability, rates, user_id) VALUES (@translate_from_language_id, @translate_to_language_id, @availability, @rates, @userId)");
+            MySqlCommand command = new MySqlCommand("INSERT INTO Translation_Services (translate_from_language_id, translate_to_language_id, availability_from, availability_to, rates, user_id) VALUES (@translate_from_language_id, @translate_to_language_id, @availability_from, @availability_to, @rates, @userId)");
+
             command.Parameters.AddWithValue("@translate_from_language_id", SelectedTranslateFromLanguageId);
             command.Parameters.AddWithValue("@translate_to_language_id", SelectedTranslateToLanguageId);
-            command.Parameters.AddWithValue("@availability", Availability);
+            command.Parameters.AddWithValue("@availability_from", AvailabilityFrom);
+            command.Parameters.AddWithValue("@availability_to", AvailabilityTo);
             command.Parameters.AddWithValue("@rates", Rates);
             command.Parameters.AddWithValue("@userId", UserService.LoggedInUser.Id);
             command.Connection = Connection;
@@ -426,6 +427,14 @@
         TranslationRequests = await GetAllTranslationRequests();
         ExistingTranslationServices = await GetAllTranslationServices();
     }
+
+    private async Task OpenOutlook(string email)
+    {
+        string mailtoUrl = $"mailto:{email}";
+        await JSRuntime.InvokeVoidAsync("open", mailtoUrl, "_blank");
+    }
+
+
 
 }
 

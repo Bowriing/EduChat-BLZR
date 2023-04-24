@@ -10,6 +10,7 @@ using Blazorise.Icons.FontAwesome;
 using Blazored.Toast;
 
 
+
 var builder = WebApplication.CreateBuilder(args);
 string connectionString = "Server=localhost;Database=EduChat;User=root;Password=M3g5t1l4c05t3;Port=3306;" ;
 //"Server=localhost;Database=educhat;Uid=root;Pwd=Jadzia123!;Port=3306;";
@@ -22,8 +23,7 @@ builder.Services.AddScoped<UserService>();
 builder.Services.AddBlazoredToast();
 
 builder.Services.AddFileReaderService(options => options.InitializeOnFirstCall = true);
-
-
+builder.Services.AddMudServices();
 
 builder.Services.AddBlazorise(options => { })
     .AddBootstrapProviders()
