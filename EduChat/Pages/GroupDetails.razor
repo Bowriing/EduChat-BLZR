@@ -28,18 +28,37 @@ else
 
                 <dt class="col-sm-3">Goal:</dt>
                 <dd class="col-sm-9">@SelectedGroup.Goal</dd>
-                <div class="row">
-                    <div class="col">
-                        <h6>Location:</h6>
-                        <input type="text" class="form-control" @bind="SelectedGroup.Location" />
+                <div class="mt-3">
+                    <h5>Meetings</h5>
+                    <div class="row">
+                        <div class="col">
+                            <h6>Location:</h6>
+                            <input type="text" class="form-control" @bind="NewMeetingLocation" />
+                        </div>
+                        <div class="col">
+                            <h6>Meeting Date and Time:</h6>
+                            <input type="datetime-local" class="form-control" @bind="NewMeetingDateTime" />
+                        </div>
+                        <div class="col">
+                            <h6>End Time:</h6>
+                            <input type="datetime-local" class="form-control" @bind="NewMeetingEndTime" />
+                        </div>
+                        <div class="text-danger">@ErrorMessage</div>
+                        <div class="col align-self-end">
+                            <button type="button" class="btn btn-primary btn-sm mt-2" @onclick="AddNewMeeting">Add Meeting</button>
+                        </div>
                     </div>
-                    <div class="col">
-                        <h6>Meeting Time:</h6>
-                        <input type="datetime-local" class="form-control" @bind="SelectedGroup.MeetingTime" />
-                    </div>
-                    <div class="col align-self-end">
-                        <button type="button" class="btn btn-primary btn-sm mt-2" @onclick="UpdateGroupDetails">Save Changes</button>
-                    </div>
+                    <ul class="list-group mt-2">
+                        @foreach (var meeting in SelectedGroup.Meetings)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    @meeting.MeetingDate.ToString("g") - @meeting.EndTime.ToShortTimeString() @meeting.Location
+                                    <button type="button" class="btn btn-danger btn-sm ms-2" @onclick="() => DeleteMeeting(meeting.Id)">Delete</button>
+                                </div>
+                            </li>
+                        }
+                    </ul>
                 </div>
                 <div class="mt-3">
                     <h5>Group Members</h5>
@@ -100,7 +119,26 @@ else
     private StudyGroup SelectedGroup { get; set; }
 
     private List<User> GroupMembers { get; set; } = new List<User>();
-
+    private string NewMeetingLocation { get; set; }
+    private DateTime NewMeetingDateTime { get; set; } = DateTime.Now;
+    private DateTime NewMeetingEndTime { get; set; } = DateTime.Now;
+    private string ErrorMessage { get; set; }
+    public class StudyGroup
+    {
+        public int Id { get; set; }
+        public string GroupName { get; set; }
+        public string LanguageName { get; set; }
+        public string Goal { get; set; }
+        public List<Meeting> Meetings { get; set; } = new List<Meeting>();
+    }
+    public class Meeting
+    {
+        public int Id { get; set; }
+        public int StudyGroupId { get; set; }
+        public DateTime MeetingDate { get; set; }
+        public DateTime EndTime { get; set; }
+        public string Location { get; set; }
+    }
     public class User
     {
         public int Id { get; set; }
@@ -109,8 +147,10 @@ else
         public string Password { get; set; }
         
     }
+
     protected override async Task OnInitializedAsync()
     {
+        await DeletePastMeetings();
         await LoadGroupDetails();
         await LoadGroupMembers();
     }
@@ -121,7 +161,7 @@ else
         {
             await Connection.OpenAsync();
 
-            MySqlCommand cmd = new MySqlCommand("SELECT sg.id, sg.name as group_name, l.name as language_name, sg.location, sg.meeting_time,sg.goal FROM study_groups sg INNER JOIN languages l ON sg.language_id = l.id WHERE sg.id = @groupId");
+            MySqlCommand cmd = new MySqlCommand("SELECT sg.id, sg.name as group_name, l.name as language_name, sg.goal FROM study_groups sg INNER JOIN languages l ON sg.language_id = l.id WHERE sg.id = @groupId");
             cmd.Parameters.AddWithValue("@groupId", GroupId);
             cmd.Connection = Connection;
             using var reader = await cmd.ExecuteReaderAsync();
@@ -132,11 +172,26 @@ else
                         Id = reader.GetInt32(0),
                         GroupName = reader.GetString(1),
                         LanguageName = reader.GetString(2),
-             
-                        Location = reader.IsDBNull(reader.GetOrdinal("location")) ? "" : reader.GetString("location"),
-                        MeetingTime = reader.IsDBNull(reader.GetOrdinal("meeting_time")) ? DateTime.MinValue : reader.GetDateTime("meeting_time"),
-                        Goal = reader.GetString(5)
+                        Goal = reader.GetString(3)
                     };
+            }
+            await reader.CloseAsync();
+
+            // New query to get meetings for the group
+            cmd = new MySqlCommand("SELECT id, study_group_id, meeting_date, end_time, location  FROM meetings WHERE study_group_id = @groupId");
+            cmd.Parameters.AddWithValue("@groupId", GroupId);
+            cmd.Connection = Connection;
+            using var meetingReader = await cmd.ExecuteReaderAsync();
+            while (meetingReader.Read())
+            {
+                SelectedGroup.Meetings.Add(new Meeting
+                    {
+                        Id = meetingReader.GetInt32(0),
+                        StudyGroupId = meetingReader.GetInt32(1),
+                        MeetingDate = meetingReader.GetDateTime(2),
+                        EndTime = meetingReader.GetDateTime(3),
+                        Location = meetingReader.GetString(4)
+                    });
             }
         }
         catch (Exception ex)
@@ -182,32 +237,32 @@ else
             await Connection.CloseAsync();
         }
     }
-    private async Task UpdateGroupDetails()
-    {
-        try
-        {
-            await Connection.OpenAsync();
+    //private async Task UpdateGroupDetails()
+    //{
+    //    try
+    //    {
+    //        await Connection.OpenAsync();
 
-            MySqlCommand cmd = new MySqlCommand("UPDATE study_groups SET location = @location, meeting_time = @meetingTime WHERE id = @groupId");
-            cmd.Parameters.AddWithValue("@location", SelectedGroup.Location);
-            cmd.Parameters.AddWithValue("@meetingTime", SelectedGroup.MeetingTime);
-            cmd.Parameters.AddWithValue("@groupId", GroupId);
-            cmd.Connection = Connection;
+    //        MySqlCommand cmd = new MySqlCommand("UPDATE study_groups SET location = @location, meeting_time = @meetingTime WHERE id = @groupId");
+    //        cmd.Parameters.AddWithValue("@location", SelectedGroup.Location);
+    //        cmd.Parameters.AddWithValue("@meetingTime", SelectedGroup.MeetingTime);
+    //        cmd.Parameters.AddWithValue("@groupId", GroupId);
+    //        cmd.Connection = Connection;
 
-            await cmd.ExecuteNonQueryAsync();
-        }
-        catch (Exception ex)
-        {
-            // Handle the exception
-        }
-        finally
-        {
+    //        await cmd.ExecuteNonQueryAsync();
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        // Handle the exception
+    //    }
+    //    finally
+    //    {
            
             
-                await Connection.CloseAsync();
-            NavigationManager.NavigateTo($"/groupdetails/{GroupId}", forceLoad: true);
-        }
-    }
+    //            await Connection.CloseAsync();
+    //        NavigationManager.NavigateTo($"/groupdetails/{GroupId}", forceLoad: true);
+    //    }
+    //}
 
     private async Task AddUserToGroup()
     {
@@ -264,6 +319,84 @@ else
     private bool IsUserMemberOfGroup()
     {
         return GroupMembers.Any(member => member.Id == UserService.UserId);
+    }
+
+    private async Task AddNewMeeting()
+    {
+        // Check if the start date is later than the end date
+        if (NewMeetingDateTime >= NewMeetingEndTime)
+        {
+            ErrorMessage = "The start date and time must be earlier than the end date and time.";
+            return;
+        }
+
+        ErrorMessage = string.Empty; // Reset the error message
+        try
+        {
+            await Connection.OpenAsync();
+
+            MySqlCommand cmd = new MySqlCommand("INSERT INTO meetings (study_group_id, meeting_date, end_time, location) VALUES (@study_group_id, @meeting_date, @end_time, @location)");
+            cmd.Parameters.AddWithValue("@study_group_id", GroupId);
+            cmd.Parameters.AddWithValue("@meeting_date", NewMeetingDateTime);
+            cmd.Parameters.AddWithValue("@end_time", NewMeetingEndTime); // Add this line
+            cmd.Parameters.AddWithValue("@location", NewMeetingLocation);
+            cmd.Connection = Connection;
+
+            await cmd.ExecuteNonQueryAsync();
+        }
+        catch (Exception ex)
+        {
+            // Handle the exception
+        }
+        finally
+        {
+            await Connection.CloseAsync();
+            await LoadGroupDetails();
+        }
+    }
+    private async Task DeleteMeeting(int meetingId)
+    {
+        try
+        {
+            await Connection.OpenAsync();
+
+            MySqlCommand cmd = new MySqlCommand("DELETE FROM meetings WHERE id = @meeting_id");
+            cmd.Parameters.AddWithValue("@meeting_id", meetingId);
+            cmd.Connection = Connection;
+
+            await cmd.ExecuteNonQueryAsync();
+        }
+        catch (Exception ex)
+        {
+            // Handle the exception
+        }
+        finally
+        {
+            await Connection.CloseAsync();
+            await LoadGroupDetails();
+        }
+    }
+    private async Task DeletePastMeetings()
+    {
+        try
+        {
+            await Connection.OpenAsync();
+
+            MySqlCommand cmd = new MySqlCommand("DELETE FROM meetings WHERE study_group_id = @groupId AND end_time < @currentTime");
+            cmd.Parameters.AddWithValue("@groupId", GroupId);
+            cmd.Parameters.AddWithValue("@currentTime", DateTime.Now); // Delete meetings with end times earlier than the current time
+            cmd.Connection = Connection;
+
+            await cmd.ExecuteNonQueryAsync();
+        }
+        catch (Exception ex)
+        {
+            // Handle the exception
+        }
+        finally
+        {
+            await Connection.CloseAsync();
+        }
     }
 
 }
