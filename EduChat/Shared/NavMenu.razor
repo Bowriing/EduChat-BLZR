@@ -85,15 +85,16 @@
     private bool collapseNavMenu = true;
 
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-    
+
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
     }
     private void LogoutUser()
     {
-        UserService.LoggedInUser.Name = null;
-        UserService.LoggedInUser.Id = null;
+        UserService.LoggedInUser = null;
+    
+        
         NavigationManager.NavigateTo("/login", forceLoad: true);
     }
 }

@@ -6,7 +6,8 @@
 
 <div class="chat-container">
     <h2>Chat</h2>
-    @if (UserService.LoggedInUser.Id.HasValue && !string.IsNullOrEmpty(UserService.LoggedInUser.Name))
+ 
+    @if (UserService.LoggedInUser != null)
     {
         <div class="messages-container">
             @foreach (var message in messages)
