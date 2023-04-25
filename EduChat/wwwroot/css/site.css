@@ -69,3 +69,14 @@ a, .btn-link {
         content: "An error has occurred."
     }
 
+
+
+.dark-theme {
+    background-color: #222;
+    color: #eee;
+}
+
+    .dark-theme a {
+        color: #a4d1ff;
+    }
+

@@ -4,6 +4,7 @@
 @inject UserService UserService
 @inject MySqlConnection Connection
 @inject NavigationManager NavigationManager
+@using EduChat.Models;
 
 <link href="css/loginstyle.css" rel="stylesheet" />
 <div class="centered-container">
@@ -27,12 +28,12 @@
 @code {
     private string Email { get; set; }
     private string Password { get; set; }
-    private string UserName { get; set; }
     private async Task LoginUser()
     {
         try
         {
             await Connection.OpenAsync();
+
 
             MySqlCommand cmdCount = new MySqlCommand("SELECT COUNT(*) FROM users WHERE email = @email AND password = @password");
             cmdCount.Parameters.AddWithValue("@email", Email);
@@ -57,14 +58,18 @@
                         string userName = reader.GetString(1);
                         UserService.UserId = userId;
                         UserService.UserName = userName;
+                        Id = reader.GetInt32(0),
+                            Name = reader.GetString(1),
+                            Email = Email
                     }
-                
+                 UserService.LoggedInUser = loggedInUser;
                
                 NavigationManager.NavigateTo("/" , forceLoad: true);
             }
             else
             {
                 // Display error message
+
             }
         }
         catch (Exception ex)
@@ -78,4 +83,5 @@
     }
 
 
+}
 }
