@@ -2,46 +2,68 @@
 @using MySql.Data.MySqlClient;
 @inject MySqlConnection Connection
 @inject NavigationManager NavigationManager
+<link href="css/signup.css" rel="stylesheet" />
+<div class="centered-container">
+    <div class="signup-container">
+        <h1>Sign up</h1>
 
-<h1>Sign up</h1>
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="alert alert-danger" role="alert">
+                @ErrorMessage
+            </div>
+        }
+        <div>
+            <label for="name">Name:</label>
+            <input type="text" id="name" @bind-value="Name" />
+        </div>
 
-<div>
-    <label for="name">Name:</label>
-    <input type="text" id="name" @bind-value="Name" />
+        <div>
+            <label for="email">Email:</label>
+            <input type="email" id="email" @bind-value="Email" />
+        </div>
+
+        <div>
+            <label for="password">Password:</label>
+            <input type="password" id="password" @bind-value="Password" />
+        </div>
+
+        <button @onclick="SignupUser">Sign up</button>
+    </div>
 </div>
-
-<div>
-    <label for="email">Email:</label>
-    <input type="email" id="email" @bind-value="Email" />
-</div>
-
-<div>
-    <label for="password">Password:</label>
-    <input type="password" id="password" @bind-value="Password" />
-</div>
-
-<button @onclick="SignupUser">Sign up</button>
 
 @code {
     private string Name { get; set; }
     private string Email { get; set; }
     private string Password { get; set; }
-
+    private string ErrorMessage { get; set; }
     private async Task SignupUser()
     {
         try
         {
             await Connection.OpenAsync();
 
-            MySqlCommand cmd = new MySqlCommand("INSERT INTO users (name, email, password) VALUES (@name, @email, @password)");
-            cmd.Parameters.AddWithValue("@name", Name);
-            cmd.Parameters.AddWithValue("@email", Email);
-            cmd.Parameters.AddWithValue("@password", Password);
-            cmd.Connection = Connection;
+            MySqlCommand checkEmailCmd = new MySqlCommand("SELECT COUNT(*) FROM users WHERE email = @email");
+            checkEmailCmd.Parameters.AddWithValue("@email", Email);
+            checkEmailCmd.Connection = Connection;
 
-            await cmd.ExecuteNonQueryAsync();
-            NavigationManager.NavigateTo("/login");
-           
+            int emailCount = Convert.ToInt32(await checkEmailCmd.ExecuteScalarAsync());
+
+            if (emailCount == 0)
+            {
+                MySqlCommand cmd = new MySqlCommand("INSERT INTO users (name, email, password) VALUES (@name, @email, @password)");
+                cmd.Parameters.AddWithValue("@name", Name);
+                cmd.Parameters.AddWithValue("@email", Email);
+                cmd.Parameters.AddWithValue("@password", Password);
+                cmd.Connection = Connection;
+
+                await cmd.ExecuteNonQueryAsync();
+                NavigationManager.NavigateTo("/login");
+            }
+            else
+            {
+                ErrorMessage = "The email address is already in use. Please use a different one.";
+            }
         }
         catch (Exception ex)
         {

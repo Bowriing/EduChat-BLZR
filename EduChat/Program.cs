@@ -1,3 +1,4 @@
+using EduChat.hubs;
 using EduChat.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
@@ -19,6 +20,7 @@ builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddScoped<MySqlConnection>(_ => new MySqlConnection(connectionString));
 builder.Services.AddSingleton<UserService>();
+
 builder.Services.AddScoped<UserService>();
 builder.Services.AddBlazoredToast();
 
@@ -28,6 +30,9 @@ builder.Services.AddMudServices();
 builder.Services.AddBlazorise(options => { })
     .AddBootstrapProviders()
     .AddFontAwesomeIcons();
+
+builder.Services.AddScoped<ChatService>();
+
 
 var app = builder.Build();
 
@@ -46,7 +51,12 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-app.MapBlazorHub();
-app.MapFallbackToPage("/_Host");
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapBlazorHub();
+    endpoints.MapHub<ChatHub>("/chatHub");
+    endpoints.MapFallbackToPage("/_Host");
+});
+//app.MapFallbackToPage("/_Host");
 
 app.Run();

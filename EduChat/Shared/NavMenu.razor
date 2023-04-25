@@ -2,6 +2,17 @@
 @using EduChat.Services;
 @inject UserService UserService
 @inject MySqlConnection Connection
+@inject NavigationManager NavigationManager
+
+<style>
+    .welcome-message {
+        font-size: 18px;
+        font-weight: bold;
+        color: #007bff;
+    }</style>
+
+
+}
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">EduChat</a>
@@ -13,30 +24,12 @@
 
 <div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
     <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="home" Match="NavLinkMatch.All">
-                <span class="oi oi-home" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="Settings" Match="NavLinkMatch.All">
-                <span class="oi oi-cog" aria-hidden="true"></span> Settings
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="Map" Match="NavLinkMatch.All">
-                <span class="oi oi-map" aria-hidden="true"></span> Map
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="studentsupport">
-                <span class="oi oi-book" aria-hidden="true"></span> Student Support
-            </NavLink>
-        </div>
+
         @if (!string.IsNullOrEmpty(UserService.UserName))
         {
             <div class="nav-item px-3">
-            <span class="nav-link">@($"Welcome, {UserService.UserName}")</span>
+                <span class="nav-link welcome-message">@($"Welcome, {UserService.UserName}")</span>
+                <button class="btn btn-link nav-link" @onclick="LogoutUser">Logout</button>
             </div>
         }
         else
@@ -52,6 +45,39 @@
                 </NavLink>
             </div>
         }
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="mygroups" Match="NavLinkMatch.All">
+                <span class="oi oi-list" aria-hidden="true"></span> My Groups
+            </NavLink>
+        </div>
+        
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="creategroup" Match="NavLinkMatch.All">
+                <span class="oi oi-plus" aria-hidden="true"></span> Create Group
+            </NavLink>
+        </div>
+          <div class="nav-item px-3">
+            <NavLink class="nav-link" href="studentsupport">
+                <span class="oi oi-book" aria-hidden="true"></span> Student Support
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="oi oi-home" aria-hidden="true"></span> Home
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="Settings" Match="NavLinkMatch.All">
+                <span class="oi oi-cog" aria-hidden="true"></span> Settings
+            </NavLink>
+        </div>
+        @*<div class="nav-item px-3">
+            <NavLink class="nav-link" href="Map" Match="NavLinkMatch.All">
+                <span class="oi oi-map" aria-hidden="true"></span> Map
+            </NavLink>
+        </div>*@
+       
+        }
     </nav>
 </div>
 
@@ -64,5 +90,10 @@
     {
         collapseNavMenu = !collapseNavMenu;
     }
-    
+    private void LogoutUser()
+    {
+        UserService.UserName = null;
+        UserService.UserId = null;
+        NavigationManager.NavigateTo("/login", forceLoad: true);
+    }
 }

@@ -1,0 +1,204 @@
+﻿@page "/grouplist"
+@using EduChat.Services;
+@inject UserService UserService
+@using MySql.Data.MySqlClient;
+@inject MySqlConnection Connection
+@inject NavigationManager NavigationManager
+
+<link href="css/groupList.css" rel="stylesheet" />
+
+
+<div class="study-groups-container">
+    <h3>Study Groups</h3>
+    @if (!ShowOnlyMyGroups){
+    <div class="form-group">
+        <label for="languageFilter">Language:</label>
+        <select class="form-control" id="languageFilter" @bind="SelectedLanguage">
+            <option value="">-- Select a Language(or get all Groups) --</option>
+            @foreach (var language in Languages)
+            {
+                <option value="@language.Id">@language.Name</option>
+            }
+        </select>
+        <button class="btn btn-primary mt-2" @onclick="FilterGroups">Search</button>
+    </div>
+    }
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Group Name</th>
+                <th>Language</th>
+                <th>Goal</th>
+                <th>Delete</th>
+                <th>Details</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var group in StudyGroups)
+            {
+                <tr>
+                    <td>@group.GroupName</td>
+                    <td>@group.LanguageName</td>
+                    <td class="goal-cell">@group.Goal</td>
+                    <td>
+                        <button class="btn btn-danger btn-sm" @onclick="@(() => DeleteGroup(group.Id))">Delete</button>
+                    </td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" @onclick="@(() => NavigateToGroupDetails(group.Id))">Details</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+
+@code {
+    private List<StudyGroup> StudyGroups { get; set; } = new List<StudyGroup>();
+    private string SelectedLanguage { get; set; }
+    private List<Language> Languages { get; set; } = new List<Language>();
+    [Parameter] public bool ShowOnlyMyGroups { get; set; } = false;
+  
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadLanguages();
+        await LoadStudyGroups(SelectedLanguage, ShowOnlyMyGroups);
+    }
+    private async Task LoadLanguages()
+    {
+        try
+        {
+            await Connection.OpenAsync();
+
+            MySqlCommand cmd = new MySqlCommand(@"SELECT l.id, l.name
+                                              FROM languages l
+                                              INNER JOIN study_groups sg ON l.id = sg.language_id
+                                              GROUP BY l.id, l.name");
+            cmd.Connection = Connection;
+
+            using var reader = await cmd.ExecuteReaderAsync();
+            Languages.Clear();
+            while (await reader.ReadAsync())
+            {
+                Languages.Add(new Language
+                    {
+                        Id = reader.GetInt32(reader.GetOrdinal("id")),
+                        Name = reader.GetString(reader.GetOrdinal("name"))
+                    });
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle the exception
+        }
+        await Connection.CloseAsync();
+    }
+
+    private async Task FilterGroups()
+    {
+        await LoadStudyGroups(SelectedLanguage);
+    }
+    private async Task LoadStudyGroups(string languageFilter = null, bool showOnlyMyGroups = false)
+    {
+        StudyGroups.Clear();
+
+        try
+        {
+            await Connection.OpenAsync();
+
+            string query = @"SELECT sg.id, sg.name as group_name, l.name as language_name, sg.goal
+                         FROM study_groups sg
+                         INNER JOIN languages l ON sg.language_id = l.id";
+
+            if (showOnlyMyGroups)
+            {
+                query += " INNER JOIN study_group_members sgm ON sg.id = sgm.study_group_id WHERE sgm.user_id = @userId";
+            }
+
+            if (!string.IsNullOrEmpty(languageFilter))
+            {
+                query += (showOnlyMyGroups ? " AND" : " WHERE") + " sg.language_id = @languageFilter";
+            }
+
+            MySqlCommand cmd = new MySqlCommand(query);
+
+            if (showOnlyMyGroups)
+            {
+                cmd.Parameters.AddWithValue("@userId", UserService.UserId); // Replace UserService.UserId with the actual user ID.
+            }
+
+            if (!string.IsNullOrEmpty(languageFilter))
+            {
+                cmd.Parameters.AddWithValue("@languageFilter", languageFilter);
+            }
+
+            cmd.Connection = Connection;
+
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                StudyGroups.Add(new StudyGroup
+                    {
+                        Id = reader.GetInt32(reader.GetOrdinal("id")),
+                        LanguageName = reader.GetString(reader.GetOrdinal("language_name")),
+                        Goal = reader.GetString(reader.GetOrdinal("goal")),
+                        GroupName = reader.GetString(reader.GetOrdinal("group_name"))
+                    });
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle the exception
+        }
+        finally
+        {
+            await Connection.CloseAsync();
+        }
+    }
+
+
+
+
+    private void NavigateToGroupDetails(int groupId)
+    {
+        NavigationManager.NavigateTo($"/groupdetails/{groupId}");
+    }
+
+    public class StudyGroup
+    {
+        public int Id { get; set; }
+        public string LanguageName { get; set; }
+        public string Location { get; set; }
+        public DateTime MeetingTime { get; set; }
+        public string Goal { get; set; }
+        public string GroupName { get; set; }
+    }
+
+    public class Language
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+    }
+    private async Task DeleteGroup(int groupId)
+    {
+        try
+        {
+            await Connection.OpenAsync();
+
+            MySqlCommand cmd = new MySqlCommand("DELETE FROM study_groups WHERE id = @groupId");
+            cmd.Parameters.AddWithValue("@groupId", groupId);
+            cmd.Connection = Connection;
+
+            await cmd.ExecuteNonQueryAsync();
+            await LoadStudyGroups();
+        }
+        catch (Exception ex)
+        {
+            // Handle the exception
+        }
+        await Connection.CloseAsync();
+        NavigationManager.NavigateTo("/creategroup", forceLoad: true);
+    }
+
+}
