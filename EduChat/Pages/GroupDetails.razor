@@ -17,98 +17,115 @@
 }
 else
 {
-    <div class="card">
-        <div class="card-header">
-            <h3>@SelectedGroup.GroupName</h3>
-        </div>
-        <div class="card-body">
-            <dl class="row">
-                <dt class="col-sm-3">Language:</dt>
-                <dd class="col-sm-9">@SelectedGroup.LanguageName</dd>
+    <ul class="nav nav-tabs" id="groupDetailsTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <a class="nav-link active" id="groupInfo-tab" data-bs-toggle="tab" href="#groupInfo" role="tab" aria-controls="groupInfo" aria-selected="true">Group Info</a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" id="groupChat-tab" data-bs-toggle="tab" href="#groupChat" role="tab" aria-controls="groupChat" aria-selected="false">Group Chat</a>
+        </li>
+    </ul>
+    <div class="tab-content" id="groupDetailsTabsContent">
+        <div class="tab-pane fade show active" id="groupInfo" role="tabpanel" aria-labelledby="groupInfo-tab">
+           
+            <div class="card">
+                <div class="card-header">
+                    <h3>@SelectedGroup.GroupName</h3>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-3">Language:</dt>
+                        <dd class="col-sm-9">@SelectedGroup.LanguageName</dd>
 
-                <dt class="col-sm-3">Goal:</dt>
-                <dd class="col-sm-9">@SelectedGroup.Goal</dd>
-                <div class="mt-3">
-                    <h5>Meetings</h5>
-                    <div class="row">
-                        <div class="col">
-                            <h6>Location:</h6>
-                            <input type="text" class="form-control" @bind="NewMeetingLocation" />
-                        </div>
-                        <div class="col">
-                            <h6>Meeting Date and Time:</h6>
-                            <input type="datetime-local" class="form-control" @bind="NewMeetingDateTime" />
-                        </div>
-                        <div class="col">
-                            <h6>End Time:</h6>
-                            <input type="datetime-local" class="form-control" @bind="NewMeetingEndTime" />
-                        </div>
-                        <div class="text-danger">@ErrorMessage</div>
-                        <div class="col align-self-end">
-                            <button type="button" class="btn btn-primary btn-sm mt-2" @onclick="AddNewMeeting">Add Meeting</button>
-                        </div>
-                    </div>
-                    <ul class="list-group mt-2">
-                        @foreach (var meeting in SelectedGroup.Meetings)
-                        {
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <div class="d-flex align-items-center">
-                                    @meeting.MeetingDate.ToString("g") - @meeting.EndTime.ToShortTimeString() @meeting.Location
-                                    <button type="button" class="btn btn-danger btn-sm ms-2" @onclick="() => DeleteMeeting(meeting.Id)">Delete</button>
+                        <dt class="col-sm-3">Goal:</dt>
+                        <dd class="col-sm-9">@SelectedGroup.Goal</dd>
+                        <div class="mt-3">
+                            <h5>Meetings</h5>
+                            <div class="row">
+                                <div class="col">
+                                    <h6>Location:</h6>
+                                    <input type="text" class="form-control" @bind="NewMeetingLocation" />
                                 </div>
-                            </li>
-                        }
-                    </ul>
-                </div>
-                <div class="mt-3">
-                    <h5>Group Members</h5>
-                    @if (!string.IsNullOrEmpty(UserService.UserName))
-                    {
-                        @if (IsUserMemberOfGroup())
-                        {
-                            <div>
-                                <span class="text-muted">You are part of that group.</span>
+                                <div class="col">
+                                    <h6>Meeting Date and Time:</h6>
+                                    <input type="datetime-local" class="form-control" @bind="NewMeetingDateTime" />
+                                </div>
+                                <div class="col">
+                                    <h6>End Time:</h6>
+                                    <input type="datetime-local" class="form-control" @bind="NewMeetingEndTime" />
+                                </div>
+                                <div class="text-danger">@ErrorMessage</div>
+                                <div class="col align-self-end">
+                                    <button type="button" class="btn btn-primary btn-sm mt-2" @onclick="AddNewMeeting">Add Meeting</button>
+                                </div>
                             </div>
-                        }
-                        else
-                        {
-                            <div>
-                                <button type="button" class="btn btn-primary btn-sm" @onclick="AddUserToGroup">Join Study Group</button>
-                            </div>
-                        }
-                    }
-                    else
-                    {
-                        <div>
-                            <span class="text-muted">You need to log in to join the group.</span>
+                            <ul class="list-group mt-2">
+                                @foreach (var meeting in SelectedGroup.Meetings)
+                                {
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div class="d-flex align-items-center">
+                                            @meeting.MeetingDate.ToString("g") - @meeting.EndTime.ToShortTimeString() @meeting.Location
+                                            <button type="button" class="btn btn-danger btn-sm ms-2" @onclick="() => DeleteMeeting(meeting.Id)">Delete</button>
+                                        </div>
+                                    </li>
+                                }
+                            </ul>
                         </div>
-                    }
-
-                    <ul class="list-group mt-2">
-                        @if (GroupMembers.Count == 0)
-                        {
-                            <li class="list-group-item">No members in this group yet.</li>
-                        }
-                        else
-                        {
-                            @foreach (var member in GroupMembers)
+                        <div class="mt-3">
+                            <h5>Group Members</h5>
+                            @if (!string.IsNullOrEmpty(UserService.UserName))
                             {
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <div class="d-flex align-items-center">
-                                        @member.Name
-                                        @if (UserService.UserId == member.Id)
-                                        {
-                                            <button type="button" class="btn btn-danger btn-sm ms-2" @onclick="() => RemoveUserFromGroup(member.Id)">Leave Group</button>
-                                        }
+                                @if (IsUserMemberOfGroup())
+                                {
+                                    <div>
+                                        <span class="text-muted">You are part of that group.</span>
                                     </div>
-                                </li>
+                                }
+                                else
+                                {
+                                    <div>
+                                        <button type="button" class="btn btn-primary btn-sm" @onclick="AddUserToGroup">Join Study Group</button>
+                                    </div>
+                                }
                             }
-                        }
-                    </ul>
+                            else
+                            {
+                                <div>
+                                    <span class="text-muted">You need to log in to join the group.</span>
+                                </div>
+                            }
+
+                            <ul class="list-group mt-2">
+                                @if (GroupMembers.Count == 0)
+                                {
+                                    <li class="list-group-item">No members in this group yet.</li>
+                                }
+                                else
+                                {
+                                    @foreach (var member in GroupMembers)
+                                    {
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div class="d-flex align-items-center">
+                                                @member.Name
+                                                @if (UserService.UserId == member.Id)
+                                                {
+                                                    <button type="button" class="btn btn-danger btn-sm ms-2" @onclick="() => RemoveUserFromGroup(member.Id)">Leave Group</button>
+                                                }
+                                            </div>
+                                        </li>
+                                    }
+                                }
+                            </ul>
+                        </div>
+                    </dl>
                 </div>
-            </dl>
+            </div>
+        </div>
+        <div class="tab-pane fade" id="groupChat" role="tabpanel" aria-labelledby="groupChat-tab">
+            <Chat GroupId="@SelectedGroup.Id"></Chat>
         </div>
     </div>
+
 }
     
 
@@ -145,7 +162,7 @@ else
         public string Name { get; set; }
         public string Email { get; set; }
         public string Password { get; set; }
-        
+
     }
 
     protected override async Task OnInitializedAsync()
@@ -200,10 +217,10 @@ else
         }
         finally
         {
-          
-            
-                await Connection.CloseAsync();
-            
+
+
+            await Connection.CloseAsync();
+
         }
     }
 
@@ -257,8 +274,8 @@ else
     //    }
     //    finally
     //    {
-           
-            
+
+
     //            await Connection.CloseAsync();
     //        NavigationManager.NavigateTo($"/groupdetails/{GroupId}", forceLoad: true);
     //    }
@@ -329,7 +346,11 @@ else
             ErrorMessage = "The start date and time must be earlier than the end date and time.";
             return;
         }
-
+        if (UserService.UserId == null)
+        {
+            ErrorMessage = "You need to be loged user to add mettings";
+            return;
+        }
         ErrorMessage = string.Empty; // Reset the error message
         try
         {
