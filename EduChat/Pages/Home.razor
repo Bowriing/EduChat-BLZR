@@ -1,4 +1,27 @@
 ﻿@page "/"
 @inherits HomeBase
+@inject NavigationManager NavigationManager
 
-<h3>Home Page</h3>
+<link href="css/home.css" rel="stylesheet" />
+<div class="home-page">
+   
+    <div class="cta-container">
+        <h2>Welcome to EduChat!</h2>
+        <p>Discover endless language learning possibilities with students from around the world!</p>
+        <div class="arrow">
+            <i class="fas fa-arrow-down"></i>
+        </div>
+        <div class="cta-buttons">
+            <button class="btn btn-primary" @onclick="NavigateToCreateGroup">Groups</button>
+        </div>
+       
+    </div>
+</div>
+
+
+@code {
+    private void NavigateToCreateGroup()
+    {
+        NavigationManager.NavigateTo("/creategroup");
+    }
+}
