@@ -25,10 +25,10 @@
 <div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
     <nav class="flex-column">
 
-        @if (!string.IsNullOrEmpty(UserService.UserName))
+        @if (UserService.LoggedInUser != null && !string.IsNullOrEmpty(UserService.LoggedInUser.Name))
         {
             <div class="nav-item px-3">
-                <span class="nav-link welcome-message">@($"Welcome, {UserService.UserName}")</span>
+                <span class="nav-link welcome-message">@($"Welcome, {UserService.LoggedInUser.Name}")</span>
                 <button class="btn btn-link nav-link" @onclick="LogoutUser">Logout</button>
             </div>
         }
@@ -92,8 +92,8 @@
     }
     private void LogoutUser()
     {
-        UserService.UserName = null;
-        UserService.UserId = null;
+        UserService.LoggedInUser.Name = null;
+        UserService.LoggedInUser.Id = null;
         NavigationManager.NavigateTo("/login", forceLoad: true);
     }
 }

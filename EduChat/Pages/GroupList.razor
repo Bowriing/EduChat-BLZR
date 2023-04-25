@@ -122,11 +122,11 @@
             }
 
             MySqlCommand cmd = new MySqlCommand(query);
-
-            if (showOnlyMyGroups)
+            if (UserService.LoggedInUser != null)
             {
-                cmd.Parameters.AddWithValue("@userId", UserService.UserId); // Replace UserService.UserId with the actual user ID.
+                cmd.Parameters.AddWithValue("@userId", UserService.LoggedInUser.Id);
             }
+           
 
             if (!string.IsNullOrEmpty(languageFilter))
             {

@@ -6,7 +6,7 @@
 
 <div class="chat-container">
     <h2>Chat</h2>
-    @if (UserSvc.UserId.HasValue && !string.IsNullOrEmpty(UserSvc.UserName))
+    @if (UserService.LoggedInUser.Id.HasValue && !string.IsNullOrEmpty(UserService.LoggedInUser.Name))
     {
         <div class="messages-container">
             @foreach (var message in messages)
@@ -57,9 +57,9 @@
 
     private async Task SendMessage()
     {
-        if (!string.IsNullOrEmpty(inputMessage) && UserSvc.UserId.HasValue && !string.IsNullOrEmpty(UserSvc.UserName))
+        if (!string.IsNullOrEmpty(inputMessage) && UserService.LoggedInUser.Id.HasValue && !string.IsNullOrEmpty(UserService.LoggedInUser.Name))
         {
-            await ChatService.SendMessageAsync(GroupId, UserSvc.UserId.Value, UserSvc.UserName, inputMessage);
+            await ChatService.SendMessageAsync(GroupId, UserService.LoggedInUser.Id.Value, UserService.LoggedInUser.Name, inputMessage);
             inputMessage = "";
         }
     }
